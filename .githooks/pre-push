@@ -1,0 +1,26 @@
+#!/bin/sh
+# Pre-push hook preventing direct push to main branch.
+
+remote="$1"
+url="$2"
+
+while read local_ref local_oid remote_ref remote_oid
+do
+    if [ "$remote_ref" = "refs/heads/main" ]; then
+        if [ "$ALLOW_MAIN_PUSH" != "1" ]; then
+            echo "======================================================================"
+            echo "ERROR: Direct push to 'main' branch is prohibited."
+            echo "Feature development must be pushed to a feature branch and submitted"
+            echo "via a Pull Request targeting 'main':"
+            echo "    git push origin <feature-branch>"
+            echo "    gh pr create --base main --head <feature-branch>"
+            echo ""
+            echo "To override in exceptional administrative scenarios, set:"
+            echo "    ALLOW_MAIN_PUSH=1 git push origin main"
+            echo "======================================================================"
+            exit 1
+        fi
+    fi
+done
+
+exit 0
