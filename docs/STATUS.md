@@ -51,6 +51,8 @@
 ---
 
 ## 5. Next Actions
-1. Open PR for Milestone A & B (`feature/milestone-a-foundation-probe`).
+1. Push simulator Keychain fix to PR #2 (`feature/milestone-a-foundation-probe`).
 2. Verify GitHub Actions build, test, and IPA packaging on `macos-14` runner.
-3. Merge PR to `main` upon green CI status.
+3. Merge PR #2 to `main` upon green CI status.
+4. Download unsigned IPA artifact and verify payload structure.
+
