@@ -1,6 +1,5 @@
 import XCTest
 @testable import LegacyDisplay
-@testable import RFBCore
 
 final class LegacyDisplayTests: XCTestCase {
 

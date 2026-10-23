@@ -1,5 +1,4 @@
 import UIKit
-import RFBCore
 
 /// Remote desktop session view controller (Section 7, 8, 9).
 public final class RemoteDisplayViewController: UIViewController,
