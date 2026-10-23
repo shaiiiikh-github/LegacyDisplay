@@ -1,0 +1,90 @@
+name: iOS Build & Test
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ "**" ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build, Test & Package iOS App
+    runs-on: macos-14
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: System Information & Xcode Selection
+        run: |
+          echo "=== macOS Host System Info ==="
+          sw_vers
+          echo "=== Available Xcode Installations ==="
+          ls -d /Applications/Xcode* || true
+          if [ -d "/Applications/Xcode_15.4.app" ]; then
+            sudo xcode-select -s /Applications/Xcode_15.4.app
+          elif [ -d "/Applications/Xcode_16.0.app" ]; then
+            sudo xcode-select -s /Applications/Xcode_16.0.app
+          fi
+          xcodebuild -version
+
+      - name: Validate Scheme and Project
+        run: |
+          xcodebuild -list -project LegacyDisplay.xcodeproj
+
+      - name: Run RFBCore Unit Tests
+        run: |
+          swift test --package-path RFBCore --parallel
+
+      - name: Verify Deployment Target (iOS 12.0)
+        run: |
+          TARGET_VER=$(xcodebuild -project LegacyDisplay.xcodeproj -target LegacyDisplay -showBuildSettings | grep -E "^\s*IPHONEOS_DEPLOYMENT_TARGET\s*=" | head -n 1 | awk -F '=' '{print $2}' | xargs)
+          echo "Discovered IPHONEOS_DEPLOYMENT_TARGET: '$TARGET_VER'"
+          if [ "$TARGET_VER" != "12.0" ]; then
+            echo "ERROR: Target deployment is '$TARGET_VER', expected 12.0"
+            exit 1
+          fi
+
+      - name: Build Generic iOS Device Archive
+        run: |
+          xcodebuild clean build \
+            -project LegacyDisplay.xcodeproj \
+            -scheme LegacyDisplay \
+            -destination "generic/platform=iOS" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=""
+
+      - name: Discover iOS Simulator & Run App Target Tests
+        run: |
+          DEVICE_NAME=$(xcrun simctl list devices available | grep -E 'iPhone 1[4-6]' | head -n 1 | sed -E 's/^[[:space:]]*([A-Za-z0-9 ]+) \(.*/\1/' | xargs)
+          if [ -z "$DEVICE_NAME" ]; then
+            DEVICE_NAME="iPhone 15"
+          fi
+          echo "Running app tests on simulator: $DEVICE_NAME"
+          xcodebuild test \
+            -project LegacyDisplay.xcodeproj \
+            -scheme LegacyDisplay \
+            -destination "platform=iOS Simulator,name=$DEVICE_NAME" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=""
+
+      - name: Package Unsigned IPA
+        run: |
+          mkdir -p build/Payload
+          APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -name "LegacyDisplay.app" -type d | head -n 1)
+          echo "Found compiled app bundle at: $APP_PATH"
+          cp -R "$APP_PATH" build/Payload/
+          cd build && zip -r LegacyDisplay-unsigned.ipa Payload/
+          ls -lh LegacyDisplay-unsigned.ipa
+
+      - name: Upload Unsigned IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LegacyDisplay-unsigned-ipa
+          path: build/LegacyDisplay-unsigned.ipa
+          retention-days: 14
