@@ -41,10 +41,10 @@ jobs:
 
       - name: Verify Deployment Target (iOS 12.0)
         run: |
-          TARGET_VER=$(xcodebuild -project LegacyDisplay.xcodeproj -target LegacyDisplay -showBuildSettings | grep -E "IPHONEOS_DEPLOYMENT_TARGET" | head -n 1 | awk '{print $3}')
-          echo "Discovered IPHONEOS_DEPLOYMENT_TARGET: $TARGET_VER"
+          TARGET_VER=$(xcodebuild -project LegacyDisplay.xcodeproj -target LegacyDisplay -showBuildSettings | grep -E "^\s*IPHONEOS_DEPLOYMENT_TARGET\s*=" | head -n 1 | awk -F '=' '{print $2}' | xargs)
+          echo "Discovered IPHONEOS_DEPLOYMENT_TARGET: '$TARGET_VER'"
           if [ "$TARGET_VER" != "12.0" ]; then
-            echo "ERROR: Target deployment is $TARGET_VER, expected 12.0"
+            echo "ERROR: Target deployment is '$TARGET_VER', expected 12.0"
             exit 1
           fi
 

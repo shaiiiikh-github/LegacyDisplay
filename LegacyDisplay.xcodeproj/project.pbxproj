@@ -96,12 +96,12 @@
 			isa = PBXGroup;
 			children = (
 				100000000000000000000011 /* AppDelegate.swift */,
-				100000000000000000000010 /* Models */,
-				100000000000000000000020 /* Networking */,
-				100000000000000000000030 /* Rendering */,
-				100000000000000000000040 /* Input */,
-				100000000000000000000050 /* Security */,
-				100000000000000000000060 /* Views */,
+				100000000000000000000310 /* Models */,
+				100000000000000000000320 /* Networking */,
+				100000000000000000000330 /* Rendering */,
+				100000000000000000000340 /* Input */,
+				100000000000000000000350 /* Security */,
+				100000000000000000000360 /* Views */,
 				100000000000000000000017 /* Assets.xcassets */,
 				100000000000000000000021 /* LaunchScreen.storyboard */,
 				100000000000000000000019 /* Info.plist */,
@@ -124,7 +124,7 @@
 			path = RFBCore/Sources/RFBCore;
 			sourceTree = "<group>";
 		};
-		100000000000000000000010 /* Models */ = {
+		100000000000000000000310 /* Models */ = {
 			isa = PBXGroup;
 			children = (
 				100000000000000000000101 /* ConnectionProfile.swift */,
@@ -132,7 +132,7 @@
 			path = Models;
 			sourceTree = "<group>";
 		};
-		100000000000000000000020 /* Networking */ = {
+		100000000000000000000320 /* Networking */ = {
 			isa = PBXGroup;
 			children = (
 				100000000000000000000111 /* RFBNetworkSession.swift */,
@@ -140,7 +140,7 @@
 			path = Networking;
 			sourceTree = "<group>";
 		};
-		100000000000000000000030 /* Rendering */ = {
+		100000000000000000000330 /* Rendering */ = {
 			isa = PBXGroup;
 			children = (
 				100000000000000000000121 /* FramebufferView.swift */,
@@ -148,7 +148,7 @@
 			path = Rendering;
 			sourceTree = "<group>";
 		};
-		100000000000000000000040 /* Input */ = {
+		100000000000000000000340 /* Input */ = {
 			isa = PBXGroup;
 			children = (
 				100000000000000000000131 /* InputHandler.swift */,
@@ -157,7 +157,7 @@
 			path = Input;
 			sourceTree = "<group>";
 		};
-		100000000000000000000050 /* Security */ = {
+		100000000000000000000350 /* Security */ = {
 			isa = PBXGroup;
 			children = (
 				100000000000000000000151 /* KeychainManager.swift */,
@@ -165,7 +165,7 @@
 			path = Security;
 			sourceTree = "<group>";
 		};
-		100000000000000000000060 /* Views */ = {
+		100000000000000000000360 /* Views */ = {
 			isa = PBXGroup;
 			children = (
 				100000000000000000000161 /* ConnectionViewController.swift */,
