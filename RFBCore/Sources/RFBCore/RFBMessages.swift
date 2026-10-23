@@ -65,7 +65,7 @@ public struct RFBServerInit: Equatable {
         }
 
         let nameData = data.subdata(in: 24..<(24 + Int(nameLen)))
-        let name = String(data: nameData, encoding: .latin1) ?? "VNC Server"
+        let name = String(data: nameData, encoding: .isoLatin1) ?? "VNC Server"
 
         return RFBServerInit(
             framebufferWidth: width,

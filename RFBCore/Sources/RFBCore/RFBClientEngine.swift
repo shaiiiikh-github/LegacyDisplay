@@ -117,7 +117,7 @@ public final class RFBClientEngine {
                 guard readBuffer.count >= 5 + reasonLen else { return false }
                 let reasonData = readBuffer.subdata(in: 5..<(5 + reasonLen))
                 readBuffer.removeFirst(5 + reasonLen)
-                let reason = String(data: reasonData, encoding: .latin1) ?? "Connection refused by server"
+                let reason = String(data: reasonData, encoding: .isoLatin1) ?? "Connection refused by server"
                 transitionToError(.serverRejected(reason: reason))
                 return true
             }
@@ -234,7 +234,7 @@ public final class RFBClientEngine {
             if readBuffer.count >= 4 + reasonLen {
                 let reasonData = readBuffer.subdata(in: 4..<(4 + reasonLen))
                 readBuffer.removeFirst(4 + reasonLen)
-                let reason = String(data: reasonData, encoding: .latin1) ?? "Invalid credentials"
+                let reason = String(data: reasonData, encoding: .isoLatin1) ?? "Invalid credentials"
                 transitionToError(.authenticationFailed(reason: reason))
                 return true
             }
