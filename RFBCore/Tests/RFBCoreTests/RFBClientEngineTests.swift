@@ -85,7 +85,14 @@ final class RFBClientEngineTests: XCTestCase {
         engine.processIncomingData(serverInitData)
 
         // Verify connected state & desktop dimensions
-        XCTAssertEqual(engine.state, .connected)
+        XCTAssertTrue(engine.state.isConnected)
+        if case .connected(let w, let h, let name) = engine.state {
+            XCTAssertEqual(w, 800)
+            XCTAssertEqual(h, 600)
+            XCTAssertEqual(name, "Raspberry Pi")
+        } else {
+            XCTFail("Expected .connected state")
+        }
         XCTAssertEqual(engine.desktopWidth, 800)
         XCTAssertEqual(engine.desktopHeight, 600)
         XCTAssertEqual(engine.framebuffer.count, 800 * 600 * 4)
@@ -126,12 +133,12 @@ final class RFBClientEngineTests: XCTestCase {
         // Server advertises RealVNC proprietary Security Types [13, 5]
         engine.processIncomingData(Data([2, 13, 5]))
 
-        // Verify engine transitions to failed with unsupportedSecurityType
+        // Verify engine transitions to failed with unsupportedSecurityMode
         XCTAssertEqual(delegate.encounteredErrors.count, 1)
-        if case .unsupportedSecurityType(let types) = delegate.encounteredErrors[0] {
+        if case .unsupportedSecurityMode(let types, _) = delegate.encounteredErrors[0] {
             XCTAssertEqual(types, [13, 5])
         } else {
-            XCTFail("Expected unsupportedSecurityType error")
+            XCTFail("Expected unsupportedSecurityMode error")
         }
     }
 
@@ -148,7 +155,7 @@ final class RFBClientEngineTests: XCTestCase {
         XCTAssertEqual(ptrData[1], 1) // Button mask (left click)
 
         // Send Key event
-        engine.sendKeyEvent(down: true, key: 0xFF0D) // Return/Enter keysym
+        engine.sendKeyEvent(down: true, keySym: 0xFF0D) // Return/Enter keysym
         XCTAssertEqual(delegate.sentPackets.count, 2)
         let keyData = delegate.sentPackets[1]
         XCTAssertEqual(keyData[0], 4) // KeyEvent message type
