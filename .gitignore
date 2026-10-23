@@ -47,3 +47,8 @@ Thumbs.db
 # Python
 __pycache__/
 *.pyc
+
+# Local artifacts & scratch
+artifacts/
+scratch_*.json
+
