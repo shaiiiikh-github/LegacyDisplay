@@ -1,0 +1,12 @@
+# Auto-detect text files and normalize line endings to LF
+* text=auto eol=lf
+
+# Explicitly ensure Xcode project and source files use LF
+*.pbxproj text eol=lf
+*.xcscheme text eol=lf
+*.swift text eol=lf
+*.plist text eol=lf
+*.storyboard text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.md text eol=lf

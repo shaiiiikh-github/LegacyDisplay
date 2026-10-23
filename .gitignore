@@ -1,0 +1,45 @@
+# Xcode
+build/
+DerivedData/
+*.moved-aside
+*.xcuserstate
+*.xcscmblueprint
+
+## User settings
+xcuserdata/
+
+## compatibility with Xcode 8 and earlier
+*.xcworkspace/xcuserdata/
+
+## Xcode Patch
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+!*.xcworkspace/contents.xcworkspacedata
+!*.xcodeproj/xcshareddata/xcschemes/
+
+## App packaging
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+## Swift Package Manager
+.build/
+Packages/
+Package.pins
+Package.resolved
+
+## Fastlane & CocoaPods
+Pods/
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/test_output
+
+## OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
