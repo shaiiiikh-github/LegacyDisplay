@@ -62,25 +62,29 @@ final class RFBClientEngineTests: XCTestCase {
         XCTAssertEqual(delegate.sentPackets[2].count, 16) // 16-byte encrypted response
 
         // 5. Server sends SecurityResult: 0 (OK)
-        var okResult: UInt32 = 0
-        let okData = withUnsafeBytes(of: okResult.bigEndian) { Data($0) }
+        let okData = Data([0, 0, 0, 0])
         engine.processIncomingData(okData)
         XCTAssertEqual(delegate.sentPackets.count, 4)
         XCTAssertEqual(delegate.sentPackets[3], Data([1])) // ClientInit (shared=1)
 
         // 6. Server sends ServerInit: 800x600, 32-bit BGRA, name "Raspberry Pi"
         var serverInitData = Data()
-        var width: UInt16 = 800
-        var height: UInt16 = 600
-        serverInitData.append(contentsOf: withUnsafeBytes(of: width.bigEndian) { Array($0) })
-        serverInitData.append(contentsOf: withUnsafeBytes(of: height.bigEndian) { Array($0) })
+        let width: UInt16 = 800
+        let height: UInt16 = 600
+        serverInitData.append(contentsOf: [UInt8(width >> 8), UInt8(width & 0xFF)])
+        serverInitData.append(contentsOf: [UInt8(height >> 8), UInt8(height & 0xFF)])
         // Pixel format: bpp=32, depth=24, bigEndian=0, trueColor=1, rMax=255, gMax=255, bMax=255, rShift=16, gShift=8, bShift=0, pad=3
         let pfBytes: [UInt8] = [32, 24, 0, 1, 0, 255, 0, 255, 0, 255, 16, 8, 0, 0, 0, 0]
         serverInitData.append(contentsOf: pfBytes)
-        let nameBytes = "Raspberry Pi".data(using: .ascii)!
-        var nameLen = UInt32(nameBytes.count)
-        serverInitData.append(contentsOf: withUnsafeBytes(of: nameLen.bigEndian) { Array($0) })
-        serverInitData.append(nameBytes)
+        let nameBytes = Array("Raspberry Pi".utf8)
+        let nameLen = UInt32(nameBytes.count)
+        serverInitData.append(contentsOf: [
+            UInt8((nameLen >> 24) & 0xFF),
+            UInt8((nameLen >> 16) & 0xFF),
+            UInt8((nameLen >> 8) & 0xFF),
+            UInt8(nameLen & 0xFF)
+        ])
+        serverInitData.append(contentsOf: nameBytes)
 
         engine.processIncomingData(serverInitData)
 

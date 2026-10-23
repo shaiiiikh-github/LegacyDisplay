@@ -60,6 +60,14 @@ public final class RFBClientEngine {
         while progress && !readBuffer.isEmpty {
             progress = processCurrentState()
         }
+        if readBuffer.isEmpty {
+            readBuffer = Data()
+        }
+    }
+
+    private func consumeReadBuffer(_ count: Int) {
+        readBuffer.removeFirst(count)
+        readBuffer = Data(readBuffer)
     }
 
     private func processCurrentState() -> Bool {
@@ -84,7 +92,7 @@ public final class RFBClientEngine {
     private func processVersionNegotiation() -> Bool {
         guard readBuffer.count >= 12 else { return false }
         let versionData = readBuffer.prefix(12)
-        readBuffer.removeFirst(12)
+        consumeReadBuffer(12)
 
         guard let sVer = RFBVersion.parse(from: versionData) else {
             let err = RFBConnectionError.invalidProtocolVersion(
@@ -116,7 +124,7 @@ public final class RFBClientEngine {
                 let reasonLen = Int(readBuffer[1]) << 24 | Int(readBuffer[2]) << 16 | Int(readBuffer[3]) << 8 | Int(readBuffer[4])
                 guard readBuffer.count >= 5 + reasonLen else { return false }
                 let reasonData = readBuffer.subdata(in: 5..<(5 + reasonLen))
-                readBuffer.removeFirst(5 + reasonLen)
+                consumeReadBuffer(5 + reasonLen)
                 let reason = String(data: reasonData, encoding: .isoLatin1) ?? "Connection refused by server"
                 transitionToError(.serverRejected(reason: reason))
                 return true
@@ -124,7 +132,7 @@ public final class RFBClientEngine {
 
             guard readBuffer.count >= 1 + count else { return false }
             let secTypes = Array(readBuffer.subdata(in: 1..<(1 + count)))
-            readBuffer.removeFirst(1 + count)
+            consumeReadBuffer(1 + count)
 
             let result = RFBSecurityHandler.selectSecurityType(from: secTypes)
             switch result {
@@ -159,7 +167,7 @@ public final class RFBClientEngine {
             // RFB 3.3: 4-byte uint32 security type directly
             guard readBuffer.count >= 4 else { return false }
             let secTypeVal = UInt8(readBuffer[3]) // lower byte of uint32
-            readBuffer.removeFirst(4)
+            consumeReadBuffer(4)
 
             guard let secType = RFBSecurityType(rawValue: secTypeVal), secType.isSupported else {
                 transitionToError(.unsupportedSecurityMode(
@@ -186,7 +194,7 @@ public final class RFBClientEngine {
             // Read 4-byte SecurityResult
             guard readBuffer.count >= 4 else { return false }
             let result = UInt32(readBuffer[0]) << 24 | UInt32(readBuffer[1]) << 16 | UInt32(readBuffer[2]) << 8 | UInt32(readBuffer[3])
-            readBuffer.removeFirst(4)
+            consumeReadBuffer(4)
 
             if result == 0 {
                 expectingAuthResult = false
@@ -200,7 +208,7 @@ public final class RFBClientEngine {
                 // Read 16-byte random challenge
                 guard readBuffer.count >= 16 else { return false }
                 let challenge = readBuffer.subdata(in: 0..<16)
-                readBuffer.removeFirst(16)
+                consumeReadBuffer(16)
 
                 guard let response = RFBDES.computeVNCAuthResponse(challenge: challenge, password: password) else {
                     transitionToError(.authenticationFailed(reason: "Failed to compute DES challenge response"))
@@ -214,7 +222,7 @@ public final class RFBClientEngine {
                 // Read 4-byte SecurityResult
                 guard readBuffer.count >= 4 else { return false }
                 let result = UInt32(readBuffer[0]) << 24 | UInt32(readBuffer[1]) << 16 | UInt32(readBuffer[2]) << 8 | UInt32(readBuffer[3])
-                readBuffer.removeFirst(4)
+                consumeReadBuffer(4)
 
                 if result == 0 {
                     expectingAuthResult = false
@@ -233,7 +241,7 @@ public final class RFBClientEngine {
             let reasonLen = Int(readBuffer[0]) << 24 | Int(readBuffer[1]) << 16 | Int(readBuffer[2]) << 8 | Int(readBuffer[3])
             if readBuffer.count >= 4 + reasonLen {
                 let reasonData = readBuffer.subdata(in: 4..<(4 + reasonLen))
-                readBuffer.removeFirst(4 + reasonLen)
+                consumeReadBuffer(4 + reasonLen)
                 let reason = String(data: reasonData, encoding: .isoLatin1) ?? "Invalid credentials"
                 transitionToError(.authenticationFailed(reason: reason))
                 return true
@@ -259,7 +267,7 @@ public final class RFBClientEngine {
 
         let totalLength = 24 + sInit.name.utf8.count
         guard readBuffer.count >= totalLength else { return false }
-        readBuffer.removeFirst(totalLength)
+        consumeReadBuffer(totalLength)
 
         self.serverInit = sInit
         self.desktopWidth = Int(sInit.framebufferWidth)
@@ -311,7 +319,7 @@ public final class RFBClientEngine {
         case 0: // FramebufferUpdate
             guard readBuffer.count >= 4 else { return false }
             let rectCount = Int(readBuffer[2]) << 8 | Int(readBuffer[3])
-            readBuffer.removeFirst(4)
+            consumeReadBuffer(4)
 
             // Hard safety check on rectangle count
             guard rectCount <= 2048 else {
@@ -330,18 +338,18 @@ public final class RFBClientEngine {
             let count = Int(readBuffer[4]) << 8 | Int(readBuffer[5])
             let totalNeeded = 6 + count * 6
             guard readBuffer.count >= totalNeeded else { return false }
-            readBuffer.removeFirst(totalNeeded)
+            consumeReadBuffer(totalNeeded)
             return true
 
         case 2: // Bell
-            readBuffer.removeFirst(1)
+            consumeReadBuffer(1)
             return true
 
         case 3: // ServerCutText
             guard readBuffer.count >= 8 else { return false }
             let len = Int(readBuffer[4]) << 24 | Int(readBuffer[5]) << 16 | Int(readBuffer[6]) << 8 | Int(readBuffer[7])
             guard readBuffer.count >= 8 + len else { return false }
-            readBuffer.removeFirst(8 + len)
+            consumeReadBuffer(8 + len)
             return true
 
         default:
@@ -363,7 +371,7 @@ public final class RFBClientEngine {
 
             if header.encodingType == RFBEncodingType.desktopSize.rawValue {
                 // DesktopSize pseudo-encoding
-                readBuffer.removeFirst(RFBRectangleHeader.headerSize)
+                consumeReadBuffer(RFBRectangleHeader.headerSize)
                 handleDesktopResize(newWidth: header.width, newHeight: header.height)
                 currentExpectedRectangles -= 1
                 continue
@@ -374,7 +382,7 @@ public final class RFBClientEngine {
                 guard readBuffer.count >= totalNeeded else { return false }
 
                 let rawPixelData = readBuffer.subdata(in: RFBRectangleHeader.headerSize..<totalNeeded)
-                readBuffer.removeFirst(totalNeeded)
+                consumeReadBuffer(totalNeeded)
 
                 decodeRawRectangle(header: header, pixelData: rawPixelData)
                 currentExpectedRectangles -= 1
@@ -386,7 +394,7 @@ public final class RFBClientEngine {
 
                 let srcX = UInt16(readBuffer[12]) << 8 | UInt16(readBuffer[13])
                 let srcY = UInt16(readBuffer[14]) << 8 | UInt16(readBuffer[15])
-                readBuffer.removeFirst(totalNeeded)
+                consumeReadBuffer(totalNeeded)
 
                 decodeCopyRect(header: header, srcX: srcX, srcY: srcY)
                 currentExpectedRectangles -= 1
